@@ -245,3 +245,26 @@ bluetooth.profile.sap.server.enabled?=true
 
 # RIL
 ro.telephony.block_binder_thread_on_incoming_calls=false
+
+# Xiaomi oxygen - Audio
+persist.vendor.audio.calfile0=/vendor/etc/acdbdata/Tutu/Tutu_Bluetooth_cal.acdb
+persist.vendor.audio.calfile1=/vendor/etc/acdbdata/Tutu/Tutu_General_cal.acdb
+persist.vendor.audio.calfile2=/vendor/etc/acdbdata/Tutu/Tutu_Global_cal.acdb
+persist.vendor.audio.calfile3=/vendor/etc/acdbdata/Tutu/Tutu_Handset_cal.acdb
+persist.vendor.audio.calfile4=/vendor/etc/acdbdata/Tutu/Tutu_Hdmi_cal.acdb
+persist.vendor.audio.calfile5=/vendor/etc/acdbdata/Tutu/Tutu_Headset_cal.acdb
+persist.vendor.audio.calfile6=/vendor/etc/acdbdata/Tutu/Tutu_Speaker_cal.acdb
+vendor.audio.mixer_xml.path=/vendor/etc/mixer_paths_mtp.xml
+
+# Xiaomi oxygen - Bluetooth
+bluetooth.sco.disable_enhanced_connection=1
+
+# Xiaomi oxygen - Camera
+persist.camera.gyro.disable=0
+
+# Xiaomi oxygen - Encryption
+ro.crypto.volume.contents_mode=aes-256-xts
+
+# Xiaomi oxygen - SoC
+ro.soc.manufacturer=Qualcomm
+ro.soc.model=MSM8953

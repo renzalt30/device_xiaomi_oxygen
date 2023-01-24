@@ -4,7 +4,16 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-COMMON_PATH := device/xiaomi/mithorium-common
+# Partitions
+SSI_PARTITIONS := product system system_ext
+TREBLE_PARTITIONS := odm vendor
+ALL_PARTITIONS := $(SSI_PARTITIONS) $(TREBLE_PARTITIONS)
+
+$(foreach p, $(call to-upper, $(ALL_PARTITIONS)), \
+    $(eval BOARD_$(p)IMAGE_FILE_SYSTEM_TYPE := ext4) \
+    $(eval TARGET_COPY_OUT_$(p) := $(call to-lower, $(p))))
+
+COMMON_PATH := device/xiaomi/oxygen
 
 # Architecture
 TARGET_ARCH := arm64
@@ -23,62 +32,54 @@ TARGET_2ND_CPU_VARIANT := cortex-a53
 BUILD_BROKEN_DUP_RULES := true
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 
-# Kernel - Common
+# Kernel
+TARGET_KERNEL_CONFIG := oxygen_defconfig
 BOARD_KERNEL_BASE := 0x80000000
 BOARD_KERNEL_CMDLINE := androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci loop.max_part=7
 BOARD_KERNEL_CMDLINE += androidboot.usbconfigfs=true androidboot.init_fatal_reboot_target=recovery printk.devkmsg=on
 BOARD_KERNEL_CMDLINE += console=ttyMSM0,115200,n8 androidboot.console=ttyMSM0
-ifeq ($(TARGET_BOARD_PLATFORM),msm8953)
-    ifeq ($(TARGET_KERNEL_VERSION),4.9)
-        BOARD_KERNEL_CMDLINE += earlycon=msm_serial_dm,0x78af000
-    else ifeq ($(TARGET_KERNEL_VERSION),4.19)
-        BOARD_KERNEL_CMDLINE += earlycon=msm_hsl_uart,0x78af000
-    endif
-endif
+BOARD_KERNEL_CMDLINE += earlycon=msm_serial_dm,0x78af000
+BOARD_KERNEL_CMDLINE += androidboot.android_dt_dir=/non-existent androidboot.boot_devices=soc/7824900.sdhci
 BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb
 BOARD_KERNEL_PAGESIZE :=  2048
 BOARD_MKBOOTIMG_ARGS := --ramdisk_offset 0x01000000 --tags_offset 0x00000100
+TARGET_KERNEL_SOURCE := kernel/xiaomi/oxygen
+TARGET_KERNEL_VERSION := 4.9
 TARGET_KERNEL_ADDITIONAL_FLAGS := LLVM=1
 
-# Kernel - Mi-Thorium
-ifeq ($(TARGET_USES_MITHORIUM_KERNEL),true)
-TARGET_KERNEL_SOURCE := kernel/xiaomi/mithorium-$(TARGET_KERNEL_VERSION)/kernel
+# Partitions
+BOARD_USES_METADATA_PARTITION := true
 
-TARGET_KERNEL_CONFIG := \
-    vendor/$(TARGET_BOARD_PLATFORM)-perf_defconfig \
-    vendor/common.config \
-    vendor/feature/android-12.config \
-    vendor/feature/erofs.config \
-    vendor/feature/exfat.config \
-    vendor/feature/kprobes.config \
-    vendor/feature/lmkd.config
+BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864
+BOARD_CACHEIMAGE_PARTITION_SIZE := 268435456
+BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
+BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864
+BOARD_USERDATAIMAGE_PARTITION_SIZE := 1971322880 # Not accurate
 
-TARGET_KERNEL_RECOVERY_CONFIG := \
-    vendor/$(TARGET_BOARD_PLATFORM)-perf_defconfig \
-    vendor/common.config \
-    vendor/feature/erofs.config \
-    vendor/feature/exfat.config \
-    vendor/feature/ntfs.config \
-    vendor/feature/no-camera-stack.config \
-    vendor/feature/no-wlan-driver.config
+# Partitions - dynamic
+BOARD_SUPER_PARTITION_BLOCK_DEVICES := cust system
+BOARD_SUPER_PARTITION_METADATA_DEVICE := system
+BOARD_SUPER_PARTITION_CUST_DEVICE_SIZE := 872415232
+BOARD_SUPER_PARTITION_SYSTEM_DEVICE_SIZE := 4294967296
+BOARD_SUPER_PARTITION_SIZE := $(shell expr $(BOARD_SUPER_PARTITION_CUST_DEVICE_SIZE) + $(BOARD_SUPER_PARTITION_SYSTEM_DEVICE_SIZE) )
 
-ifeq ($(PRODUCT_SET_DEBUGFS_RESTRICTIONS),true)
-TARGET_KERNEL_CONFIG += \
-    vendor/debugfs.config
-endif
+BOARD_SUPER_PARTITION_GROUPS := oxygen_dynpart
+BOARD_OXYGEN_DYNPART_SIZE := $(shell expr $(BOARD_SUPER_PARTITION_SIZE) - 4194304 )
+BOARD_OXYGEN_DYNPART_PARTITION_LIST := $(ALL_PARTITIONS)
 
-ifeq ($(TARGET_KERNEL_VERSION),4.9)
-TARGET_KERNEL_CONFIG += \
-    vendor/feature/uclamp.config
-else ifeq ($(TARGET_KERNEL_VERSION),4.19)
-TARGET_KERNEL_CONFIG += \
-    vendor/feature/wireguard.config
-endif
+# Partitions - reserved size
+$(foreach p, $(call to-upper, $(SSI_PARTITIONS)), \
+    $(eval BOARD_$(p)IMAGE_EXTFS_INODE_COUNT := -1))
+$(foreach p, $(call to-upper, $(TREBLE_PARTITIONS)), \
+    $(eval BOARD_$(p)IMAGE_EXTFS_INODE_COUNT := 4096))
 
-ifneq ($(shell grep CONFIG_KSU_STATIC_HOOKS $(TARGET_KERNEL_SOURCE)/techpack/KernelSU/kernel/ksu.c),)
-TARGET_KERNEL_CONFIG += \
-    vendor/feature/ksu_static_hooks.config
-endif
+$(foreach p, $(call to-upper, $(SSI_PARTITIONS)), \
+    $(eval BOARD_$(p)IMAGE_PARTITION_RESERVED_SIZE := 83886080)) # 80 MB
+$(foreach p, $(call to-upper, $(TREBLE_PARTITIONS)), \
+    $(eval BOARD_$(p)IMAGE_PARTITION_RESERVED_SIZE := 41943040)) # 40 MB
+
+ifneq ($(WITH_GMS),true)
+BOARD_PRODUCTIMAGE_PARTITION_RESERVED_SIZE := 838860800 # 800 MB
 endif
 
 # ANT
@@ -115,8 +116,11 @@ AUDIO_FEATURE_ENABLED_DLKM := false
 AUDIO_FEATURE_ENABLED_HAL_V7 := true
 
 # Bootloader
-TARGET_BOOTLOADER_BOARD_NAME := $(TARGET_BOARD_PLATFORM)
+TARGET_BOOTLOADER_BOARD_NAME := MSM8953
 TARGET_NO_BOOTLOADER := true
+
+# Bluetooth
+BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(COMMON_PATH)/bluetooth
 
 # Camera
 BOARD_QTI_CAMERA_32BIT_ONLY := true
@@ -124,6 +128,7 @@ TARGET_SUPPORT_HAL1 := false
 TARGET_TS_MAKEUP := true
 
 # Display
+TARGET_SCREEN_DENSITY := 342
 TARGET_USES_GRALLOC1 := true
 TARGET_USES_HWC2 := true
 TARGET_USES_ION := true
@@ -166,24 +171,15 @@ DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := \
     vendor/lineage/config/device_framework_matrix.xml
 DEVICE_FRAMEWORK_MANIFEST_FILE := $(COMMON_PATH)/framework_manifest.xml
 DEVICE_MANIFEST_FILE := $(COMMON_PATH)/manifest.xml
-DEVICE_MANIFEST_FILE += $(COMMON_PATH)/manifest_k$(TARGET_KERNEL_VERSION).xml
-ifneq ($(TARGET_HAS_NO_CONSUMERIR),true)
+DEVICE_MANIFEST_FILE += $(COMMON_PATH)/manifest_k4.9.xml
 DEVICE_MANIFEST_FILE += $(COMMON_PATH)/configs/manifest/consumerir.xml
-endif
-ifneq ($(TARGET_USES_DEVICE_SPECIFIC_GATEKEEPER),true)
 DEVICE_MANIFEST_FILE += $(COMMON_PATH)/configs/manifest/gatekeeper.xml
-endif
-ifneq ($(TARGET_USES_DEVICE_SPECIFIC_KEYMASTER),true)
 DEVICE_MANIFEST_FILE += $(COMMON_PATH)/configs/manifest/keymaster.xml
-endif
-ifeq ($(TARGET_USES_Q_DISPLAY_STACK),true)
-DEVICE_MANIFEST_FILE += $(COMMON_PATH)/configs/manifest/q-display-stack.xml
-endif
 DEVICE_MATRIX_FILE := $(COMMON_PATH)/compatibility_matrix.xml
 
 # Init
-TARGET_INIT_VENDOR_LIB ?= //$(COMMON_PATH):init_xiaomi_mithorium
-TARGET_RECOVERY_DEVICE_MODULES ?= init_xiaomi_mithorium
+TARGET_INIT_VENDOR_LIB := //$(COMMON_PATH):init_xiaomi_mithorium
+TARGET_RECOVERY_DEVICE_MODULES := init_xiaomi_mithorium
 
 # Partitions
 TARGET_COPY_OUT_VENDOR := vendor
@@ -195,13 +191,12 @@ BOARD_ROOT_EXTRA_SYMLINKS := \
     /mnt/vendor/persist:/persist
 
 # Power
+TARGET_TAP_TO_WAKE_NODE := "/sys/devices/platform/soc/78b7000.i2c/i2c-3/3-0038/wakeup_mode"
 TARGET_USES_INTERACTION_BOOST := true
 
 # Platform
 BOARD_USES_QCOM_HARDWARE := true
-ifneq ($(USE_MITHORIUM_QCOM_HALS),true)
 TARGET_ENFORCES_QSSI := true
-endif
 
 # Properties
 TARGET_ODM_PROP += $(COMMON_PATH)/odm.prop
@@ -209,13 +204,10 @@ TARGET_SYSTEM_PROP += $(COMMON_PATH)/system.prop
 TARGET_SYSTEM_EXT_PROP += $(COMMON_PATH)/system_ext.prop
 TARGET_VENDOR_PROP += $(COMMON_PATH)/vendor.prop
 
-ifeq ($(TARGET_KERNEL_VERSION),4.19)
-TARGET_VENDOR_PROP += $(COMMON_PATH)/vendor_k4.19.prop
-endif
-
 # Recovery
 TARGET_USERIMAGES_USE_F2FS := true
 TARGET_USERIMAGES_USE_EXT4 := true
+TARGET_RECOVERY_FSTAB := $(COMMON_PATH)/rootdir/etc/fstab.qcom
 
 # RIL
 ENABLE_VENDOR_RIL_SERVICE := true
@@ -223,11 +215,10 @@ ENABLE_VENDOR_RIL_SERVICE := true
 # SELinux
 include device/qcom/sepolicy-legacy-um/SEPolicy.mk
 BOARD_VENDOR_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/vendor
+BOARD_VENDOR_SEPOLICY_DIRS += $(COMMON_PATH)/biometrics/sepolicy
 SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/public
 SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/private
-ifeq (true,$(call math_lt,$(PRODUCT_SHIPPING_API_LEVEL),28))
 BOARD_VENDOR_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/legacy/vendor
-endif
 
 # Treble
 PRODUCT_FULL_TREBLE_OVERRIDE := true
@@ -249,8 +240,4 @@ WIFI_HIDL_UNIFIED_SUPPLICANT_SERVICE_RC_ENTRY := true
 WPA_SUPPLICANT_VERSION := VER_0_8_X
 
 # Inherit from the proprietary version
-ifeq ($(TARGET_KERNEL_VERSION),4.9)
-include vendor/xiaomi/mithorium-common/BoardConfigVendor.mk
-else ifeq ($(TARGET_KERNEL_VERSION),4.19)
-include vendor/xiaomi/mithorium-common-4.19/BoardConfigVendor.mk
-endif
+include vendor/xiaomi/oxygen/BoardConfigVendor.mk

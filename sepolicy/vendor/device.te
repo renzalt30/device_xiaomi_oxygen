@@ -1,2 +1,4 @@
+typeattribute system_block_device super_block_device_type;
+
 # IR
 type ir_device, dev_type;
