@@ -190,6 +190,9 @@ BOARD_ROOT_EXTRA_SYMLINKS := \
     /vendor/firmware_mnt:/firmware \
     /mnt/vendor/persist:/persist
 
+# Camera
+TARGET_SUPPORT_HAL1 := false
+
 # Power
 TARGET_TAP_TO_WAKE_NODE := "/sys/devices/platform/soc/78b7000.i2c/i2c-3/3-0038/wakeup_mode"
 TARGET_USES_INTERACTION_BOOST := true
