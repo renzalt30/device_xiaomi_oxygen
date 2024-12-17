@@ -151,16 +151,10 @@ PRODUCT_PACKAGES += \
     camera.msm8953 \
     libshims_android \
     libshims_ui \
-    libwui \
-    vendor.qti.hardware.camera.device@1.0.vendor
+    libwui
 
 PRODUCT_PACKAGES += \
     libstdc++.vendor
-
-# Charger
-MITHORIUM_PRODUCT_PACKAGES += \
-    charger_led \
-    charger_led_recovery
 
 # Consumer IR
 PRODUCT_PACKAGES += \
@@ -200,7 +194,7 @@ PRODUCT_PACKAGES += \
     android.hardware.drm@1.4.vendor
 
 # Dumpstate
-PRODUCT_PACKAGES += \
+MITHORIUM_PRODUCT_PACKAGES += \
     android.hardware.dumpstate-service.mithorium
 
 # Fastbootd
@@ -231,11 +225,8 @@ PRODUCT_PACKAGES += \
 
 # Health
 PRODUCT_PACKAGES += \
-    android.hardware.health-service.qti \
-    android.hardware.health-service.qti_recovery
-
-PRODUCT_PACKAGES += \
-    vendor.lineage.health-service.default
+    android.hardware.health@2.1-impl \
+    android.hardware.health@2.1-service
 
 # HIDL
 PRODUCT_PACKAGES += \
@@ -365,11 +356,9 @@ PRODUCT_PACKAGES += \
     init.qcom.usb.rc \
     init.recovery.qcom.rc \
     init.target.rc \
-    init.uclamp.rc \
     init.xiaomi.rc \
     ueventd.qcom.rc \
     init.class_main.sh \
-    init.dump_early_dmesg.sh \
     init.qcom.early_boot.sh \
     init.qcom.post_boot.sh \
     init.qcom.sensors.sh \
@@ -404,10 +393,6 @@ PRODUCT_COPY_FILES += \
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
     $(LOCAL_PATH)
-
-# Subsystem state notifier
-PRODUCT_PACKAGES += \
-    subsystem_state_notifier
 
 # Telephony
 PRODUCT_PACKAGES += \
