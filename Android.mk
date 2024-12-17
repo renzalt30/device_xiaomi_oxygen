@@ -6,7 +6,7 @@
 
 LOCAL_PATH := $(call my-dir)
 
-ifeq ($(TARGET_DEVICE),oxygen)
+ifeq ($(TARGET_USES_XIAOMI_MITHORIUM_COMMON_TREE),true)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
 
