@@ -1,4 +1,4 @@
-# All unpinned blobs below are extracted from LA.UM.9.6.3.r1-06200-89xx.0 (4.9)
+# All unpinned blobs below are extracted from LA.UM.9.6.3.r1-06200-89xx.0
 # PAN Package version: Nokia/Panther_00WW/PAN_sprout:11/RKQ1.200928.002/00WW_3_240:user/release-keys
 
 # ADSP
@@ -106,12 +106,10 @@ vendor/lib64/libStDrvInt.so
 vendor/lib64/libdrmfs.so
 vendor/lib64/libdrmtime.so
 vendor/lib64/libqisl.so
+vendor/lib64/librpmb.so
 vendor/lib64/libsecureui.so
 vendor/lib64/libsecureui_svcsock.so
 vendor/lib64/libssd.so
-
-# DRM - from PAN
-vendor/lib64/librpmb.so
 
 # Firmware (Camera)
 vendor/firmware/cpp_firmware_v1_10_0.fw

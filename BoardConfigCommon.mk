@@ -28,58 +28,11 @@ BOARD_KERNEL_BASE := 0x80000000
 BOARD_KERNEL_CMDLINE := androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci loop.max_part=7
 BOARD_KERNEL_CMDLINE += androidboot.usbconfigfs=true androidboot.init_fatal_reboot_target=recovery printk.devkmsg=on
 BOARD_KERNEL_CMDLINE += console=ttyMSM0,115200,n8 androidboot.console=ttyMSM0
-ifeq ($(TARGET_BOARD_PLATFORM),msm8953)
-    ifeq ($(TARGET_KERNEL_VERSION),4.9)
-        BOARD_KERNEL_CMDLINE += earlycon=msm_serial_dm,0x78af000
-    else ifeq ($(TARGET_KERNEL_VERSION),4.19)
-        BOARD_KERNEL_CMDLINE += earlycon=msm_hsl_uart,0x78af000
-    endif
-endif
+BOARD_KERNEL_CMDLINE += earlycon=msm_hsl_uart,0x78af000
 BOARD_KERNEL_IMAGE_NAME := Image.gz-dtb
 BOARD_KERNEL_PAGESIZE :=  2048
 BOARD_MKBOOTIMG_ARGS := --ramdisk_offset 0x01000000 --tags_offset 0x00000100
 TARGET_KERNEL_ADDITIONAL_FLAGS := LLVM=1
-
-# Kernel - Mi-Thorium
-ifeq ($(TARGET_USES_MITHORIUM_KERNEL),true)
-TARGET_KERNEL_SOURCE := kernel/xiaomi/mithorium-$(TARGET_KERNEL_VERSION)/kernel
-
-TARGET_KERNEL_CONFIG := \
-    vendor/$(TARGET_BOARD_PLATFORM)-perf_defconfig \
-    vendor/common.config \
-    vendor/feature/android-12.config \
-    vendor/feature/erofs.config \
-    vendor/feature/exfat.config \
-    vendor/feature/kprobes.config \
-    vendor/feature/lmkd.config
-
-TARGET_KERNEL_RECOVERY_CONFIG := \
-    vendor/$(TARGET_BOARD_PLATFORM)-perf_defconfig \
-    vendor/common.config \
-    vendor/feature/erofs.config \
-    vendor/feature/exfat.config \
-    vendor/feature/ntfs.config \
-    vendor/feature/no-camera-stack.config \
-    vendor/feature/no-wlan-driver.config
-
-ifeq ($(PRODUCT_SET_DEBUGFS_RESTRICTIONS),true)
-TARGET_KERNEL_CONFIG += \
-    vendor/debugfs.config
-endif
-
-ifeq ($(TARGET_KERNEL_VERSION),4.9)
-TARGET_KERNEL_CONFIG += \
-    vendor/feature/uclamp.config
-else ifeq ($(TARGET_KERNEL_VERSION),4.19)
-TARGET_KERNEL_CONFIG += \
-    vendor/feature/wireguard.config
-endif
-
-ifneq ($(shell grep CONFIG_KSU_STATIC_HOOKS $(TARGET_KERNEL_SOURCE)/techpack/KernelSU/kernel/ksu.c),)
-TARGET_KERNEL_CONFIG += \
-    vendor/feature/ksu_static_hooks.config
-endif
-endif
 
 # ANT
 BOARD_ANT_WIRELESS_DEVICE := "vfs-prerelease"
@@ -115,7 +68,7 @@ AUDIO_FEATURE_ENABLED_DLKM := false
 AUDIO_FEATURE_ENABLED_HAL_V7 := true
 
 # Bootloader
-TARGET_BOOTLOADER_BOARD_NAME := $(TARGET_BOARD_PLATFORM)
+TARGET_BOOTLOADER_BOARD_NAME := MSM8953
 TARGET_NO_BOOTLOADER := true
 
 # Camera
@@ -166,24 +119,15 @@ DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE := \
     vendor/lineage/config/device_framework_matrix.xml
 DEVICE_FRAMEWORK_MANIFEST_FILE := $(COMMON_PATH)/framework_manifest.xml
 DEVICE_MANIFEST_FILE := $(COMMON_PATH)/manifest.xml
-DEVICE_MANIFEST_FILE += $(COMMON_PATH)/manifest_k$(TARGET_KERNEL_VERSION).xml
-ifneq ($(TARGET_HAS_NO_CONSUMERIR),true)
+DEVICE_MANIFEST_FILE += $(COMMON_PATH)/manifest_k4.9.xml
 DEVICE_MANIFEST_FILE += $(COMMON_PATH)/configs/manifest/consumerir.xml
-endif
-ifneq ($(TARGET_USES_DEVICE_SPECIFIC_GATEKEEPER),true)
 DEVICE_MANIFEST_FILE += $(COMMON_PATH)/configs/manifest/gatekeeper.xml
-endif
-ifneq ($(TARGET_USES_DEVICE_SPECIFIC_KEYMASTER),true)
 DEVICE_MANIFEST_FILE += $(COMMON_PATH)/configs/manifest/keymaster.xml
-endif
-ifeq ($(TARGET_USES_Q_DISPLAY_STACK),true)
-DEVICE_MANIFEST_FILE += $(COMMON_PATH)/configs/manifest/q-display-stack.xml
-endif
 DEVICE_MATRIX_FILE := $(COMMON_PATH)/compatibility_matrix.xml
 
 # Init
-TARGET_INIT_VENDOR_LIB ?= //$(COMMON_PATH):init_xiaomi_mithorium
-TARGET_RECOVERY_DEVICE_MODULES ?= init_xiaomi_mithorium
+TARGET_INIT_VENDOR_LIB := //$(COMMON_PATH):init_xiaomi_mithorium
+TARGET_RECOVERY_DEVICE_MODULES := init_xiaomi_mithorium
 
 # Partitions
 TARGET_COPY_OUT_VENDOR := vendor
@@ -202,19 +146,13 @@ TARGET_USES_INTERACTION_BOOST := true
 
 # Platform
 BOARD_USES_QCOM_HARDWARE := true
-ifneq ($(USE_MITHORIUM_QCOM_HALS),true)
 TARGET_ENFORCES_QSSI := true
-endif
 
 # Properties
 TARGET_ODM_PROP += $(COMMON_PATH)/odm.prop
 TARGET_SYSTEM_PROP += $(COMMON_PATH)/system.prop
 TARGET_SYSTEM_EXT_PROP += $(COMMON_PATH)/system_ext.prop
 TARGET_VENDOR_PROP += $(COMMON_PATH)/vendor.prop
-
-ifeq ($(TARGET_KERNEL_VERSION),4.19)
-TARGET_VENDOR_PROP += $(COMMON_PATH)/vendor_k4.19.prop
-endif
 
 # Recovery
 TARGET_USERIMAGES_USE_F2FS := true
@@ -228,9 +166,7 @@ include device/qcom/sepolicy-legacy-um/SEPolicy.mk
 BOARD_VENDOR_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/vendor
 SYSTEM_EXT_PUBLIC_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/public
 SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/private
-ifeq (true,$(call math_lt,$(PRODUCT_SHIPPING_API_LEVEL),28))
 BOARD_VENDOR_SEPOLICY_DIRS += $(COMMON_PATH)/sepolicy/legacy/vendor
-endif
 
 # Treble
 PRODUCT_FULL_TREBLE_OVERRIDE := true
@@ -252,8 +188,4 @@ WIFI_HIDL_UNIFIED_SUPPLICANT_SERVICE_RC_ENTRY := true
 WPA_SUPPLICANT_VERSION := VER_0_8_X
 
 # Inherit from the proprietary version
-ifeq ($(TARGET_KERNEL_VERSION),4.9)
-include vendor/xiaomi/mithorium-common/BoardConfigVendor.mk
-else ifeq ($(TARGET_KERNEL_VERSION),4.19)
 include vendor/xiaomi/mithorium-common-4.19/BoardConfigVendor.mk
-endif
